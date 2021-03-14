@@ -95,7 +95,7 @@ router.get('/movies', function (req, res){
             res.send(err);
         }
 
-        res.status(200).send({msg: 'Movie found', Move: movie, headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+        res.status(200).send({msg: 'Movie found', Movie: movie, headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
     })
 
 });
@@ -116,7 +116,23 @@ router.post('/movies', function (req, res){
 });
 
 router.put('/movies', authJwtController.isAuthenticated, function (req, res){
-    res.status(200).send({msg: 'Movie updated', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+    Movie.findOne({ title: req.body.title}).select('title yearReleased genre actors').exec(function (err, movie) {
+        if (err) {
+            res.send(err);
+        }
+
+        movie.title = req.body.title;
+        movie.yearReleased = req.body.yearReleased;
+        movie.genre = req.body.genre;
+        movie.actors = req.body.actors;
+
+        movie.save(function (err){
+            if(err){
+                return res.json(err);
+            }
+            res.status(200).send({msg: 'Movie updated', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+        });
+    })
 });
 
 router.delete('/movies', authJwtController.isAuthenticated, function (req, res){
