@@ -136,7 +136,13 @@ router.put('/movies', authJwtController.isAuthenticated, function (req, res){
 });
 
 router.delete('/movies', authJwtController.isAuthenticated, function (req, res){
-    res.status(200).send({msg: 'Movie deleted', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+    Movie.deleteOne({title: req.body.title}).then(function (err){
+        if(err){
+            res.send(err);
+        }
+
+        res.status(200).send({msg: 'Movie deleted', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+    })
 });
 
 
