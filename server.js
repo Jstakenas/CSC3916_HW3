@@ -87,56 +87,94 @@ router.post('/signin', function (req, res) {
 });
 
 router.get('/movies', function (req, res){
-    var movieSearch = new Movie();
-    movieSearch.title = req.body.title;
+    if (!req.body.title){
+        res.json({success: false, msg: 'Please include a title to search by'})
+    }
+    else {
+        var movieSearch = new Movie();
+        movieSearch.title = req.body.title;
 
-    Movie.findOne({ title: movieSearch.title}).select('title yearReleased genre actors').exec(function (err, movie) {
-        if (err) {
-            res.send(err);
-        }
-
-        res.status(200).send({msg: 'Movie found', Movie: movie, headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
-    })
-
+        Movie.findOne({title: movieSearch.title}).select('title yearReleased genre actors').exec(function (err, movie) {
+            if (err) {
+                res.send(err);
+            }
+            if (movie == null) {
+                res.status(200).send({
+                    msg: 'Couldnt find requested movie',
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            } else {
+                res.status(200).send({
+                    msg: 'Movie found',
+                    Movie: movie,
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            }
+        })
+    }
 });
 
 router.post('/movies', function (req, res){
-    var movie = new Movie();
-    movie.title = req.body.title;
-    movie.yearReleased = req.body.yearReleased;
-    movie.genre = req.body.genre;
-    movie.actors = req.body.actors;
-
-    movie.save(function (err){
-        if(err){
-            return res.json(err);
-        }
-        res.status(200).send({msg: 'Movie saved', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
-    });
-});
-
-router.put('/movies', authJwtController.isAuthenticated, function (req, res){
-    Movie.findOne({ title: req.body.title}).select('title yearReleased genre actors').exec(function (err, movie) {
-        if (err) {
-            res.send(err);
-        }
-
+    if (!req.body.title || !req.body.yearReleased || !req.body.genre || !req.body.actors){
+        res.json({success: false, msg: 'Please include all fields, incl those not updated'})
+    }
+    else {
+        var movie = new Movie();
         movie.title = req.body.title;
         movie.yearReleased = req.body.yearReleased;
         movie.genre = req.body.genre;
         movie.actors = req.body.actors;
 
-        movie.save(function (err){
-            if(err){
+        movie.save(function (err) {
+            if (err) {
                 return res.json(err);
             }
-            res.status(200).send({msg: 'Movie updated', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+            res.status(200).send({
+                msg: 'Movie saved',
+                headers: req.headers,
+                query: req.query,
+                env: process.env.SECRET_KEY
+            })
         });
-    })
+    }
+});
+
+router.put('/movies', authJwtController.isAuthenticated, function (req, res){
+    if (!req.body.title){
+        res.json({success: false, msg: 'Please include a title to search by'})
+    }
+    else {
+        Movie.findOne({title: req.body.title}).select('title yearReleased genre actors').exec(function (err, movie) {
+            if (err) {
+                res.send(err);
+            }
+
+            movie.title = req.body.title;
+            movie.yearReleased = req.body.yearReleased;
+            movie.genre = req.body.genre;
+            movie.actors = req.body.actors;
+
+            movie.save(function (err) {
+                if (err) {
+                    return res.json(err);
+                }
+                res.status(200).send({
+                    msg: 'Movie updated',
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            });
+        })
+    }
 });
 
 router.delete('/movies', authJwtController.isAuthenticated, function (req, res){
-    Movie.deleteOne({title: req.body.title}).then(function (err){
+    Movie.deleteOne({title: req.body.title}).exec(function (err){
         if(err){
             res.send(err);
         }
