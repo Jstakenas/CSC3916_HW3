@@ -87,15 +87,25 @@ router.post('/signin', function (req, res) {
 });
 
 router.get('/movies', function (req, res){
-    res.status(200).send({msg: 'GET movies', headers: req.headers, query: req.query, env: process.env.SECRET_KEY});
+    var movieSearch = new Movie();
+    movieSearch.title = req.body.title;
+
+    Movie.findOne({ title: movieSearch.title}).select('title yearReleased genre actors').exec(function (err, movie) {
+        if (err) {
+            res.send(err);
+        }
+
+        res.status(200).send({msg: 'Movie found', Move: movie, headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+    })
+
 });
 
 router.post('/movies', function (req, res){
     var movie = new Movie();
     movie.title = req.body.title;
-    movie.YearReleased = req.body.YearReleased;
-    movie.Genre = req.body.Genre;
-    movie.Actors = req.body.Actors;
+    movie.yearReleased = req.body.yearReleased;
+    movie.genre = req.body.genre;
+    movie.actors = req.body.actors;
 
     movie.save(function (err){
         if(err){
@@ -113,27 +123,7 @@ router.delete('/movies', authJwtController.isAuthenticated, function (req, res){
     res.status(200).send({msg: 'Movie deleted', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
 });
 
-router.route('/testcollection')
-    .delete(authController.isAuthenticated, function(req, res) {
-        console.log(req.body);
-        res = res.status(200);
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
-        }
-        var o = getJSONObjectForMovieRequirement(req);
-        res.json(o);
-    }
-    )
-    .put(authJwtController.isAuthenticated, function(req, res) {
-        console.log(req.body);
-        res = res.status(200);
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
-        }
-        var o = getJSONObjectForMovieRequirement(req);
-        res.json(o);
-    }
-    );
+
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);

@@ -13,10 +13,10 @@ mongoose.set('useCreateIndex', true);
 
 //movies schema
 var MoviesSchema = new Schema({
-    Title: String,
-    YearReleased: String,
-    Genre: String,
-    Actors: Array
+    title: String,
+    yearReleased: String,
+    genre: String,
+    actors: Array
 });
 
 //return the model to server
