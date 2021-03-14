@@ -12,6 +12,7 @@ var authJwtController = require('./auth_jwt');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
 var User = require('./Users');
+var Movie = require('./movies');
 
 var app = express();
 app.use(cors());
@@ -90,7 +91,18 @@ router.get('/movies', function (req, res){
 });
 
 router.post('/movies', function (req, res){
-    res.status(200).send({msg: 'Movie saved', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+    var movie = new Movie();
+    movie.title = req.body.title;
+    movie.YearReleased = req.body.YearReleased;
+    movie.Genre = req.body.Genre;
+    movie.Actors = req.body.Actors;
+
+    movie.save(function (err){
+        if(err){
+            return res.json(err);
+        }
+        res.status(200).send({msg: 'Movie saved', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
+    });
 });
 
 router.put('/movies', authJwtController.isAuthenticated, function (req, res){
