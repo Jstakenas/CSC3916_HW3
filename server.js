@@ -13,6 +13,7 @@ var jwt = require('jsonwebtoken');
 var cors = require('cors');
 var User = require('./Users');
 var Movie = require('./movies');
+var Review = require('./reviews');
 
 var app = express();
 app.use(cors());
@@ -52,7 +53,7 @@ router.post('/signup', function(req, res) {
 
         user.save(function (err){
             if(err){
-                if (err.code = 11000)
+                if (err.code == 11000)
                         return res.json({success:false, message: 'A user with that username already exists.'});
                 else
                         return res.json(err);
@@ -106,13 +107,33 @@ router.get('/movies', function (req, res){
                     env: process.env.SECRET_KEY
                 })
             } else {
-                res.status(200).send({
-                    msg: 'Movie found',
-                    Movie: movie,
-                    headers: req.headers,
-                    query: req.query,
-                    env: process.env.SECRET_KEY
-                })
+                if (req.body.reviews === true){
+                    var reviewSearch = new Review();
+                    reviewSearch.movie = req.body.title;
+
+                    Review.find({movie: reviewSearch.movie}).select('username, movie, text, rating').exec( function (err, reviews) {
+                        if (err) {
+                            res.send(err);
+                        }
+                        res.status(200).send({
+                            msg: 'Movie found',
+                            Movie: movie,
+                            Reviews: reviews,
+                            headers: req.headers,
+                            query: req.query,
+                            env: process.env.SECRET_KEY
+                        })
+                    })
+
+                } else {
+                    res.status(200).send({
+                        msg: 'Movie found',
+                        Movie: movie,
+                        headers: req.headers,
+                        query: req.query,
+                        env: process.env.SECRET_KEY
+                    })
+                }
             }
         })
     }
@@ -133,6 +154,7 @@ router.post('/movies', function (req, res){
             if (err) {
                 return res.json(err);
             }
+
             res.status(200).send({
                 msg: 'Movie saved',
                 headers: req.headers,
@@ -145,7 +167,7 @@ router.post('/movies', function (req, res){
 
 router.put('/movies', authJwtController.isAuthenticated, function (req, res){
     if (!req.body.title){
-        res.json({success: false, msg: 'Please include a title to search by'})
+        res.json({success: false, msg: 'Please include a title to search movies by'})
     }
     else {
         Movie.findOne({title: req.body.title}).select('title yearReleased genre actors').exec(function (err, movie) {
@@ -181,6 +203,64 @@ router.delete('/movies', authJwtController.isAuthenticated, function (req, res){
 
         res.status(200).send({msg: 'Movie deleted', headers: req.headers, query: req.query, env: process.env.SECRET_KEY})
     })
+});
+
+router.post('/reviews', authJwtController.isAuthenticated, function (req, res){
+    if (!req.body.title || !req.body.text || !req.body.rating || !req.body.username){
+        res.json({success: false, msg: 'Please include all fields, incl those not updated'})
+    }
+    else{
+        var review = new Review();
+        review.movie = req.body.title;
+        review.username = req.body.username;
+        review.text = req.body.text;
+        review.rating = req.body.rating;
+
+        review.save(function (err) {
+            if (err) {
+                return res.json(err);
+            }
+
+            res.status(200).send({
+                msg: 'Review saved',
+                headers: req.headers,
+                query: req.query,
+                env: process.env.SECRET_KEY
+            })
+        });
+    }
+});
+
+router.get('/reviews', function (req, res){
+    if (!req.body.title){
+        res.json({success: false, msg: 'Please include a title to search reviews by'})
+    }
+    else{
+        var reviewSearch = new Review();
+        reviewSearch.movie = req.body.title;
+
+        Review.find({movie: reviewSearch.movie}).select('username, movie, text, rating').exec( function (err, reviews){
+            if (err) {
+                res.send(err);
+            }
+            if (reviews == null) {
+                res.status(200).send({
+                    msg: 'Couldnt find any reviews for requested movie',
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            } else {
+                res.status(200).send({
+                    msg: 'Found reviews for movie',
+                    Review: reviews,
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            }
+        })
+    }
 });
 
 
