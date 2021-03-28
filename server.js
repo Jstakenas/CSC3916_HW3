@@ -111,7 +111,7 @@ router.get('/movies', function (req, res){
                     var reviewSearch = new Review();
                     reviewSearch.movie = req.body.title;
 
-                    Review.find({movie: reviewSearch.movie}).select('username, movie, text, rating').exec( function (err, reviews) {
+                    Review.find({movie: reviewSearch.movie}).select('username movie text rating').exec( function (err, reviews) {
                         if (err) {
                             res.send(err);
                         }
@@ -206,12 +206,12 @@ router.delete('/movies', authJwtController.isAuthenticated, function (req, res){
 });
 
 router.post('/reviews', authJwtController.isAuthenticated, function (req, res){
-    if (!req.body.title || !req.body.text || !req.body.rating || !req.body.username){
-        res.json({success: false, msg: 'Please include all fields, incl those not updated'})
+    if (!req.body.movie || !req.body.text || !req.body.rating || !req.body.username){
+        res.json({success: false, msg: 'Please include all fields'})
     }
     else{
         var review = new Review();
-        review.movie = req.body.title;
+        review.movie = req.body.movie;
         review.username = req.body.username;
         review.text = req.body.text;
         review.rating = req.body.rating;
@@ -239,7 +239,7 @@ router.get('/reviews', function (req, res){
         var reviewSearch = new Review();
         reviewSearch.movie = req.body.title;
 
-        Review.find({movie: reviewSearch.movie}).select('username, movie, text, rating').exec( function (err, reviews){
+        Review.find({movie: reviewSearch.movie}).select('username movie text rating').exec( function (err, reviews){
             if (err) {
                 res.send(err);
             }
