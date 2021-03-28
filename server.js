@@ -217,7 +217,7 @@ router.post('/reviews', authJwtController.isAuthenticated, function (req, res){
         review.rating = req.body.rating;
 
         var movieSearch = new Movie();
-        movieSearch.title = req.body.title;
+        movieSearch.title = req.body.movie;
 
         Movie.findOne({title: movieSearch.title}).select('title yearReleased genre actors').exec(function (err, movie) {
             if (err) {
