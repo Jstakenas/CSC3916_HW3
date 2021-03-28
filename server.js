@@ -225,7 +225,7 @@ router.post('/reviews', authJwtController.isAuthenticated, function (req, res){
             }
             if (movie == null) {
                 res.status(200).send({
-                    msg: 'Couldnt find movie to assoicate review with',
+                    msg: 'Couldnt find movie to associate review with',
                     headers: req.headers,
                     query: req.query,
                     env: process.env.SECRET_KEY
