@@ -216,18 +216,35 @@ router.post('/reviews', authJwtController.isAuthenticated, function (req, res){
         review.text = req.body.text;
         review.rating = req.body.rating;
 
-        review.save(function (err) {
-            if (err) {
-                return res.json(err);
-            }
+        var movieSearch = new Movie();
+        movieSearch.title = req.body.title;
 
-            res.status(200).send({
-                msg: 'Review saved',
-                headers: req.headers,
-                query: req.query,
-                env: process.env.SECRET_KEY
-            })
-        });
+        Movie.findOne({title: movieSearch.title}).select('title yearReleased genre actors').exec(function (err, movie) {
+            if (err) {
+                res.send(err);
+            }
+            if (movie == null) {
+                res.status(200).send({
+                    msg: 'Couldnt find movie to assoicate review with',
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            } else {
+                review.save(function (err) {
+                    if (err) {
+                        return res.json(err);
+                    }
+
+                    res.status(200).send({
+                        msg: 'Review saved',
+                        headers: req.headers,
+                        query: req.query,
+                        env: process.env.SECRET_KEY
+                    })
+                });
+            }
+        })
     }
 });
 
