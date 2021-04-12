@@ -87,15 +87,28 @@ router.post('/signin', function (req, res) {
     })
 });
 
-router.get('/movies', function (req, res){
-    if (!req.body.title){
-        res.json({success: false, msg: 'Please include a title to search by'})
-    }
-    else {
-        var movieSearch = new Movie();
-        movieSearch.title = req.body.title;
+router.get('/movies/:title', function (req, res){
+    var movieSearch = new Movie();
+    movieSearch.title = req.params.title;
 
-        Movie.findOne({title: movieSearch.title}).select('title yearReleased genre actors').exec(function (err, movie) {
+    if (req.query.reviews == 1) {
+        Movie.aggregate([
+            {
+                $lookup:
+                    {
+                        from: "reviews",
+                        localField: "title",
+                        foreignField: "movie",
+                        as: "reviews"
+                    }
+            },
+            {
+                $match:
+                    {
+                        title: req.params.title
+                    }
+            }
+        ]).exec(function (err, movie) {
             if (err) {
                 res.send(err);
             }
@@ -107,37 +120,89 @@ router.get('/movies', function (req, res){
                     env: process.env.SECRET_KEY
                 })
             } else {
-                if (req.query.reviews == 1){
-                    var reviewSearch = new Review();
-                    reviewSearch.movie = req.body.title;
-
-                    Review.find({movie: reviewSearch.movie}).select('username movie text rating').exec( function (err, reviews) {
-                        if (err) {
-                            res.send(err);
-                        }
-                        res.status(200).send({
-                            msg: 'Movie found',
-                            Movie: movie,
-                            Reviews: reviews,
-                            headers: req.headers,
-                            query: req.query,
-                            env: process.env.SECRET_KEY
-                        })
-                    })
-
-                } else {
-                    res.status(200).send({
-                        msg: 'Movie found',
-                        Movie: movie,
-                        headers: req.headers,
-                        query: req.query,
-                        env: process.env.SECRET_KEY
-                    })
-                }
+                res.status(200).send({
+                    movie: movie
+                })
             }
         })
+    } else {
+        //add title filters below
+        Movie.find({title: movieSearch.title}).select('title yearReleased genre actors').exec(function (err, movie) {
+            if (err) {
+                res.send(err);
+            }
+            if (movie == null) {
+                res.status(200).send({
+                    msg: 'Couldnt find requested movie',
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            } else {
+                res.status(200).send({
+                    movie: movie
+                })
+            }
+        })
+
     }
 });
+
+router.get('/movies', function (req, res) {
+    var movieSearch = new Movie();
+    movieSearch.title = req.body.title;
+
+    if (req.query.reviews == 1) {
+        Movie.aggregate([
+            {
+                $lookup:
+                    {
+                        from: "reviews",
+                        localField: "title",
+                        foreignField: "movie",
+                        as: "reviews"
+                    }
+            }
+        ]).exec(function (err, movie) {
+            if (err) {
+                res.send(err);
+            }
+            if (movie == null) {
+                res.status(200).send({
+                    msg: 'Couldnt find requested movie',
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            } else {
+                res.status(200).send({
+                    movie: movie
+                })
+            }
+        })
+    } else {
+        Movie.find({}).select('title yearReleased genre actors').exec(function (err, movie) {
+            if (err) {
+                res.send(err);
+            }
+            if (movie == null) {
+                res.status(200).send({
+                    msg: 'Couldnt find requested movie',
+                    headers: req.headers,
+                    query: req.query,
+                    env: process.env.SECRET_KEY
+                })
+            } else {
+                res.status(200).send({
+                    movie: movie
+                })
+            }
+        })
+
+    }
+
+});
+
 
 router.post('/movies', function (req, res){
     if (!req.body.title || !req.body.yearReleased || !req.body.genre || !req.body.actors){

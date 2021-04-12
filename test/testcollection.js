@@ -15,8 +15,11 @@ let login_details = {
 }
 
 describe('Register, Login and Call Test Collection with Basic Auth and JWT Auth', () => {
-   beforeEach((done) => { //Before each test initialize the database to empty
+   before((done) => { //Before each test initialize the database to empty
        //db.userList = [];
+       User.deleteOne({name: 'test'}, function (err, user){
+           if (err) throw err;
+       });
 
        done();
     })
@@ -47,7 +50,15 @@ describe('Register, Login and Call Test Collection with Basic Auth and JWT Auth'
                         res.body.should.have.property('token');
                         let token = res.body.token;
                         console.log(token);
-                        done();
+                        chai.request(server)
+                            .get('/movies/Holes?reviews=1')
+                            .set('Authorization', token)
+                            .end((err, res) =>{
+                                res.should.have.status(200);
+                                console.log(res.body);
+                                console.log(token);
+                                done();
+                            })
                     })
               })
         })
