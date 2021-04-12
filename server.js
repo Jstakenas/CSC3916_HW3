@@ -107,7 +107,7 @@ router.get('/movies', function (req, res){
                     env: process.env.SECRET_KEY
                 })
             } else {
-                if (req.query.reviews === 1){
+                if (req.query[reviews] === 1){
                     var reviewSearch = new Review();
                     reviewSearch.movie = req.body.title;
 
